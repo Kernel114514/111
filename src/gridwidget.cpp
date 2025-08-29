@@ -140,7 +140,7 @@ void GridWidget::spawnSingleBee() {
 
 void GridWidget::updateCounter() {
     counter->setText(QString("Blocks Left: %1\nHP Left: %2")
-                      .arg(m_gameData.boughtblocks)
+                      .arg(m_gameData.blocks)
                       .arg(m_gameData.current_hp));
     counter->adjustSize();
 }
@@ -280,14 +280,16 @@ void GridWidget::checkWinConditions() {
 void GridWidget::playerWins(int xpReward) {
     gameActive = false;
     m_gameData.auraxp += xpReward;
+    m_gameData.level++;
     
     QMessageBox::information(this, "Victory!", 
         QString("You won! The dog is safe!\n\n"
                 "You earned %1 Aura XP!\n\n"
-                "Total Aura XP: %2")
+                "You leveled up, you are now level %2!\n\n"
+                "Total Aura XP: %3")
                 .arg(xpReward)
+                .arg(m_gameData.level)
                 .arg(m_gameData.auraxp));
-    
     this->close();
 }
 
@@ -404,14 +406,9 @@ void GridWidget::paintEvent(QPaintEvent *e) {
 
     // Lines with health bars
     p.setPen(QPen(LINE_COLOR, LINE_WIDTH));
-    const int max_length = m_gameData.boughtblocks + 3;
     for (const Line &line : drawnLines) {
         if (line.health > 0) {
-            QLineF qline(line.p1, line.p2);
-            if (qline.length() > max_length) {
-                qline.setLength(max_length);
-            }
-            p.drawLine(qline);
+            p.drawLine(line.p1, line.p2);
             
             QPoint midPoint = (line.p1 + line.p2) / 2;
             p.setPen(Qt::black);
@@ -453,19 +450,34 @@ void GridWidget::mousePressEvent(QMouseEvent *e) {
             if (selectedPoints.size() < 2) {
                 selectedPoints.push_back(clickedP);
                 if (selectedPoints.size() == 2) {
-                    QLineF tempLine(selectedPoints[0], selectedPoints[1]);
-                    const int max_length = m_gameData.boughtblocks + 3;
-                    if (tempLine.length() > max_length) {
+                    QPoint p1 = selectedPoints[0];
+                    QPoint p2 = selectedPoints[1];
+                    
+                    // Calculate grid coordinates
+                    int gridX1 = (p1.x() - MARGIN) / SPACING;
+                    int gridY1 = (p1.y() - MARGIN) / SPACING;
+                    int gridX2 = (p2.x() - MARGIN) / SPACING;
+                    int gridY2 = (p2.y() - MARGIN) / SPACING;
+                    
+                    // Calculate differences in grid coordinates
+                    int xa = abs(gridX2 - gridX1);
+                    int ya = abs(gridY2 - gridY1);
+                    
+                    // Calculate Euclidean distance in grid units
+                    double distance = sqrt(xa * xa + ya * ya);
+                    int requiredBlocks = ceil(distance);
+                    
+                    if (requiredBlocks > m_gameData.blocks) {
                         QMessageBox::warning(this, "Error", "Error: You don't have enough blocks.");
                         selectedPoints.clear();
                     } else {
                         Line newLine;
-                        newLine.p1 = selectedPoints[0];
-                        newLine.p2 = selectedPoints[1];
+                        newLine.p1 = p1;
+                        newLine.p2 = p2;
                         newLine.health = 20;
-                        newLine.line = tempLine;
+                        newLine.line = QLineF(p1, p2);
                         drawnLines.push_back(newLine);
-                        m_gameData.boughtblocks -= qFloor(tempLine.length() / SPACING);
+                        m_gameData.blocks -= requiredBlocks;
                         updateCounter();
                     }
                 }

@@ -160,9 +160,9 @@ void displayshop(datastorage data){
     cout << "\n";
     cout << "AuraXP: " << data.auraxp << "\nBought Extra Blocks: " << data.boughtblocks << "\nBought Extra HP: " << data.boughthp << "\nCurrent Level: " << data.level << '\n';
     cout << "Items: " << endl;
-    cout << "1. 1 Extra Block" << endl;
-    cout << "2. 1 Extra Hp" << endl;
-    cout << "3. Level Up 1 Level" << endl;
+    cout << "1. 4 Extra Block（1000 AuraXP）" << endl;  
+    cout << "2. 2 Extra Hp（400 AuraXP）" << endl;
+    cout << "3. Level Up 1 Level（75 AuraXP）" << endl;
     cout << "R: Return to main menu" << endl;
     cout << "E: Exit" << endl;
     cout << "Please Enter your choice: ";
@@ -177,25 +177,26 @@ void gameshop(datastorage &data){
     while(true){
         cin >> c;
         if(c == '1'){
-            if(data.auraxp >= 15) {
-                data.auraxp -= 15;
-                data.boughtblocks++;
+            if(data.auraxp >= 1000) {
+                data.auraxp -= 1000;
+                data.boughtblocks += 4;
                 writeconfig(data);
-                cout << "Purchase successful! You bought 1 Extra Block.\n";
+                cout << "Purchase successful! You bought 5 Extra Block.\n";
+                this_thread::sleep_for(chrono::seconds(1));
             } else {
                 cout << "Sorry, but you don't have enough AuraXP to buy this item.\nSleeping 3.0 seconds...\n";
+                this_thread::sleep_for(chrono::seconds(3));
             }
-            this_thread::sleep_for(chrono::seconds(3));
             system(CLEAR_COMMAND);
             displayshop(data);
             continue;
         }
         else if(c == '2'){
-            if(data.auraxp >= 20) {
-                data.auraxp -= 20;
-                data.boughthp++;
+            if(data.auraxp >= 400) {
+                data.auraxp -= 400;
+                data.boughthp += 2;
                 writeconfig(data);
-                cout << "Purchase successful! You bought 1 Extra HP.\n";
+                cout << "Purchase successful! You bought 2 Extra HP.\n";
             } else {
                 cout << "Sorry, but you don't have enough AuraXP to buy this item.\nSleeping 3.0 seconds...\n";
             }
@@ -237,6 +238,7 @@ void gameshop(datastorage &data){
 }
 
 void gamemain(datastorage &data){
+    data.blocks = data.boughtblocks + (rand() % 61 + 20);
     data.current_hp = data.boughthp + (rand() % 11 + 10);
     int argc = 1;
     char *argv[] = {(char*)"aio", nullptr};
